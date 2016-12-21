@@ -1,0 +1,16 @@
+{
+  "name": "wpi-stepper",
+  "version": "0.1.0",
+  "description": "Stepper motor module for WiringPi-Node",
+  "author": "Mike Green <mike.is.green@gmail.com>",
+  "main": "dist/lib/stepper.js",
+  "dependencies": {},
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mikedamage/wpi-stepper.git"
+  },
+  "babel": {
+    "presets": [ "es2015-node" ]
+  }
+}
