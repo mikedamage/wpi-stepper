@@ -20,6 +20,7 @@
   "scripts": {
     "build": "babel --out-dir dist src",
     "doc": "jsdoc2md src/lib/*.js > doc/api.md",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "clean": "rm -rf ./dist"
   }
 }
