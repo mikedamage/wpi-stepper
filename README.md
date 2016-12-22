@@ -16,7 +16,7 @@ I wrote `wpi-stepper` for a few reasons:
 
 ## API
 
-Please refer to the [API documentation](./docs/api.md).
+Please refer to the [API documentation](docs/api.md).
 
 ## License
 
