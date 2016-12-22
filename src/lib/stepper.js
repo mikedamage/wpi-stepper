@@ -2,6 +2,16 @@ import _               from 'lodash';
 import wpi, { OUTPUT } from 'wiring-pi';
 import EventEmitter    from 'events';
 
+/**
+ * A matrix of high/low pin values, representing each step of an activation cycle
+ * @typedef {Array} Mode
+ */
+
+/**
+ * @constant
+ * @type {Object.<string,Mode>}
+ * @default
+ */
 export const MODES = {
   SINGLE: [
     [ 1, 0, 0, 0 ],
@@ -17,10 +27,37 @@ export const MODES = {
   ]
 };
 
+/**
+ * A number of steps to advance or retreat
+ * @typedef {number} direction
+ */
+
+/**
+ * @constant
+ * @type {Direction}
+ * @default
+ */
 export const FORWARD = 1;
+
+/**
+ * @constant
+ * @type {Direction}
+ * @default
+ */
 export const BACKWARD = -1;
 
+/**
+ * Stepper motor control class
+ */
 export class Stepper extends EventEmitter {
+  /**
+   * Create a stepper motor controller
+   * @param {Object} config - An object of configuration parameters
+   * @param {number[]} config.pins - An array of Raspberry Pi GPIO pin numbers
+   * @param {number} config.steps - The number of steps per motor revolution
+   * @param {Mode} config.mode - GPIO pin activation sequence
+   * @param {number} config.speed - Motor rotation speed in RPM
+   */
   constructor({ pins, steps = 200, mode = MODES.DUAL, speed = 1 }) {
     super();
     this.mode       = mode;
