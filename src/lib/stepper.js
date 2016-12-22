@@ -1,18 +1,3 @@
-/**
- * Motor Wiring Scheme:
- *
- * Out 1: black
- * Out 2: green
- * Out 3: red
- * Out 4: blue
- *
- * Forward Motion Sequence:
- * black + blue (1, 0, 0, 1)
- * green + blue (0, 1, 0, 1)
- * green + red  (0, 1, 1, 0)
- * black + red  (1, 0, 1, 0)
- */
-
 import _               from 'lodash';
 import wpi, { OUTPUT } from 'wiring-pi';
 import EventEmitter    from 'events';

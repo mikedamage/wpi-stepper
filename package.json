@@ -10,7 +10,8 @@
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
-    "babel-preset-es2015-node": "^6.1.1"
+    "babel-preset-es2015-node": "^6.1.1",
+    "jsdoc-to-markdown": "^2.0.1"
   },
   "repository": {
     "type": "git",
@@ -18,6 +19,7 @@
   },
   "scripts": {
     "build": "babel --out-dir dist src",
+    "doc": "jsdoc2md src/lib/*.js > doc/api.md",
     "prepublish": "npm run build"
   }
 }
