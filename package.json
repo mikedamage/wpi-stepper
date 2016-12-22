@@ -16,11 +16,6 @@
     "type": "git",
     "url": "https://github.com/mikedamage/wpi-stepper.git"
   },
-  "babel": {
-    "presets": [
-      "es2015-node"
-    ]
-  },
   "scripts": {
     "build": "babel --out-dir dist src",
     "prepublish": "npm run build"
