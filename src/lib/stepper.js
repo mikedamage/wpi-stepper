@@ -78,10 +78,20 @@ export class Stepper extends EventEmitter {
     }
   }
 
+  /**
+   * The maximum speed at which the motor can rotate (as dictated by JS's timing resolution)
+   * @type {number}
+   */
   get maxRPM() {
     return 60 * 1000 / this.steps;
   }
 
+  /**
+   * Set motor speed in RPM
+   * @type {number}
+   * @param {number} rpm - The number of RPMs
+   * @fires Stepper#speed
+   */
   set speed(rpm) {
     this._rpms = rpm;
 
@@ -90,6 +100,13 @@ export class Stepper extends EventEmitter {
     }
 
     this._stepDelay = this.maxRPM / this._rpms;
+
+    /**
+     * Speed change event
+     * @event Stepper#speed
+     * @param {number} rpms - The current RPM number
+     * @param {number} stepDelay - The current step delay in msj
+     */
     this.emit('speed', this._rpms, this._stepDelay);
   }
 
@@ -97,17 +114,36 @@ export class Stepper extends EventEmitter {
     return this._rpms;
   }
 
+  /**
+   * Stop the motor and power down all GPIO pins
+   * @fires Stepper#stop
+   * @returns {undefined}
+   */
   stop() {
     this._stopMoving();
     this._powerDown();
     this.emit('stop');
   }
 
+  /**
+   * Stop moving the motor and hold position
+   * @fires Stepper#hold
+   * @returns {undefined}
+   */
   hold() {
     this._stopMoving();
     this.emit('hold');
   }
 
+  /**
+   * Move the motor a specified number of steps
+   * @param {number} stepsToMove - Positive for forward, negative for backward
+   * @fires Stepper#start
+   * @fires Stepper#move
+   * @fires Stepper#complete
+   * @fires Stepper#hold
+   * @returns {Promise.<number>} A promise resolving to the number of steps moved
+   */
   move(stepsToMove) {
     if (stepsToMove === 0) {
       return this.hold();
@@ -124,14 +160,18 @@ export class Stepper extends EventEmitter {
 
     this.emit('start', this.direction, stepsToMove);
 
-    this._moveTimer = setInterval(() => {
-      if (remaining === 0) {
-        this.emit('complete');
-        this.hold();
-      }
-      this._step(this.direction);
-      remaining--;
-    }, this._stepDelay);
+    return new Promise((resolve) => {
+      this._moveTimer = setInterval(() => {
+        if (remaining === 0) {
+          this.emit('complete');
+          this.hold();
+          return resolve(this.stepNum);
+        }
+
+        this._step(this.direction);
+        remaining--;
+      }, this._stepDelay);
+    });
   }
 
   stepForward() {

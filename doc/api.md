@@ -36,6 +36,16 @@
 Stepper motor control class
 
 **Kind**: global class  
+
+* [Stepper](#Stepper)
+    * [new Stepper(config)](#new_Stepper_new)
+    * [.maxRPM](#Stepper+maxRPM) : <code>number</code>
+    * [.speed](#Stepper+speed) : <code>number</code>
+    * [.stop()](#Stepper+stop) ⇒ <code>undefined</code>
+    * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
+    * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
+    * ["speed" (rpms, stepDelay)](#Stepper+event_speed)
+
 <a name="new_Stepper_new"></a>
 
 ### new Stepper(config)
@@ -49,11 +59,78 @@ Create a stepper motor controller
 | config.steps | <code>number</code> | The number of steps per motor revolution |
 | config.mode | <code>[Mode](#Mode)</code> | GPIO pin activation sequence |
 | config.speed | <code>number</code> | Motor rotation speed in RPM |
+
+<a name="Stepper+maxRPM"></a>
+
+### stepper.maxRPM : <code>number</code>
+The maximum speed at which the motor can rotate (as dictated by JS's timing resolution)
+
+**Kind**: instance property of <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+speed"></a>
+
+### stepper.speed : <code>number</code>
+Set motor speed in RPM
+
+**Kind**: instance property of <code>[Stepper](#Stepper)</code>  
+**Emits**: <code>[speed](#Stepper+event_speed)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| rpm | <code>number</code> | The number of RPMs |
+
+<a name="Stepper+stop"></a>
+
+### stepper.stop() ⇒ <code>undefined</code>
+Stop the motor and power down all GPIO pins
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Emits**: <code>Stepper#event:stop</code>  
+<a name="Stepper+hold"></a>
+
+### stepper.hold() ⇒ <code>undefined</code>
+Stop moving the motor and hold position
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Emits**: <code>Stepper#event:hold</code>  
+<a name="Stepper+move"></a>
+
+### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
+Move the motor a specified number of steps
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
+**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>Stepper#event:hold</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| stepsToMove | <code>number</code> | Positive for forward, negative for backward |
+
+<a name="Stepper+event_speed"></a>
+
+### "speed" (rpms, stepDelay)
+Speed change event
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| rpms | <code>number</code> | The current RPM number |
+| stepDelay | <code>number</code> | The current step delay in msj |
 
 <a name="Stepper"></a>
 
 ## Stepper
 **Kind**: global class  
+
+* [Stepper](#Stepper)
+    * [new Stepper(config)](#new_Stepper_new)
+    * [.maxRPM](#Stepper+maxRPM) : <code>number</code>
+    * [.speed](#Stepper+speed) : <code>number</code>
+    * [.stop()](#Stepper+stop) ⇒ <code>undefined</code>
+    * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
+    * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
+    * ["speed" (rpms, stepDelay)](#Stepper+event_speed)
+
 <a name="new_Stepper_new"></a>
 
 ### new Stepper(config)
@@ -67,6 +144,63 @@ Create a stepper motor controller
 | config.steps | <code>number</code> | The number of steps per motor revolution |
 | config.mode | <code>[Mode](#Mode)</code> | GPIO pin activation sequence |
 | config.speed | <code>number</code> | Motor rotation speed in RPM |
+
+<a name="Stepper+maxRPM"></a>
+
+### stepper.maxRPM : <code>number</code>
+The maximum speed at which the motor can rotate (as dictated by JS's timing resolution)
+
+**Kind**: instance property of <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+speed"></a>
+
+### stepper.speed : <code>number</code>
+Set motor speed in RPM
+
+**Kind**: instance property of <code>[Stepper](#Stepper)</code>  
+**Emits**: <code>[speed](#Stepper+event_speed)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| rpm | <code>number</code> | The number of RPMs |
+
+<a name="Stepper+stop"></a>
+
+### stepper.stop() ⇒ <code>undefined</code>
+Stop the motor and power down all GPIO pins
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Emits**: <code>Stepper#event:stop</code>  
+<a name="Stepper+hold"></a>
+
+### stepper.hold() ⇒ <code>undefined</code>
+Stop moving the motor and hold position
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Emits**: <code>Stepper#event:hold</code>  
+<a name="Stepper+move"></a>
+
+### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
+Move the motor a specified number of steps
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
+**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>Stepper#event:hold</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| stepsToMove | <code>number</code> | Positive for forward, negative for backward |
+
+<a name="Stepper+event_speed"></a>
+
+### "speed" (rpms, stepDelay)
+Speed change event
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| rpms | <code>number</code> | The current RPM number |
+| stepDelay | <code>number</code> | The current step delay in msj |
 
 <a name="MODES"></a>
 
