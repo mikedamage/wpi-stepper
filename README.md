@@ -12,11 +12,11 @@ I wrote `wpi-stepper` for a few reasons:
 + I'm a web developer by trade. I'm most comfortable programming in JavaScript.
 + My wife and I keep chickens (20 laying hens and a rotating cast of broilers, if you're curious).
 + We built an automatic sliding door for our chicken coop that uses a stepper motor.
-+ All existing stepper control modules in JS either don't work, can't be installed in current versions of Node, or require you to wire your motor in a way that makes no rational sense.
++ All existing stepper control modules in JS either don't work, can't be installed in current versions of Node, or require you to wire your motor to the driver in a way that makes no rational sense.
 
 ## API
 
-Please refer to the [API documentation](doc/api.md).
+[API documentation](doc/api.md) is a work in progress.
 
 ## License
 
