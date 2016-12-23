@@ -32,6 +32,23 @@ The raw ES6 source, if you're transpiling it yourself:
 import { Stepper } from 'wpi-stepper/es6/lib/stepper';
 ```
 
+### Example
+
+```js
+const pins = [
+  17, // A+
+  16, // A-
+  13, // B+
+  12  // B-
+];
+const motor = new Stepper({ pins, steps: 200 });
+
+motor.speed = 20; // 20 RPM
+
+// Move the motor forward 800 steps (4 rotations), logging to console when done:
+motor.move(800).then(() => console.log('motion complete'));
+```
+
 ## API
 
 [API documentation](doc/api.md) is a work in progress.
