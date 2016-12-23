@@ -1,7 +1,7 @@
 ## Classes
 
 <dl>
-<dt><a href="#Stepper">Stepper</a></dt>
+<dt><a href="#Stepper">Stepper</a> ⇐ <code>EventEmitter</code></dt>
 <dd><p>Stepper motor control class</p>
 </dd>
 <dt><a href="#Stepper">Stepper</a></dt>
@@ -30,14 +30,23 @@
 </dd>
 </dl>
 
+## External
+
+<dl>
+<dt><a href="#external_EventEmitter">EventEmitter</a></dt>
+<dd><p>Node&#39;s EventEmitter module</p>
+</dd>
+</dl>
+
 <a name="Stepper"></a>
 
-## Stepper
+## Stepper ⇐ <code>EventEmitter</code>
 Stepper motor control class
 
 **Kind**: global class  
+**Extends:** <code>EventEmitter</code>  
 
-* [Stepper](#Stepper)
+* [Stepper](#Stepper) ⇐ <code>EventEmitter</code>
     * [new Stepper(config)](#new_Stepper_new)
     * [.maxRPM](#Stepper+maxRPM) : <code>number</code>
     * [.speed](#Stepper+speed) : <code>number</code>
@@ -66,13 +75,7 @@ Create a stepper motor controller
 **Example**  
 ```js
 import { Stepper } from 'wpi-stepper';
-  const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
-  motor.speed = 20;
-  motor.move(200).then(() => console.log('We have revolved!'));
-  motor.move(-200).then(() => console.log('Right back where we started'));
-  motor.on('stop', () => console.log('Powering down.'));
-  motor.stop();
-  // => "Powering down."
+const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
 ```
 <a name="Stepper+maxRPM"></a>
 
@@ -93,6 +96,11 @@ Set motor speed in RPM
 | --- | --- | --- |
 | rpm | <code>number</code> | The number of RPMs |
 
+**Example** *(Sets the speed to 20 RPM)*  
+```js
+motor.speed = 20;
+// => 20
+```
 <a name="Stepper+stop"></a>
 
 ### stepper.stop() ⇒ <code>undefined</code>
@@ -100,6 +108,13 @@ Stop the motor and power down all GPIO pins
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Emits**: <code>[stop](#Stepper+event_stop)</code>  
+**Example** *(Log to console whenever the motor stops)*  
+```js
+motor.on('stop', () => console.log('Motor stopped'));
+motor.stop();
+// => undefined
+// => "Motor stopped"
+```
 <a name="Stepper+hold"></a>
 
 ### stepper.hold() ⇒ <code>undefined</code>
@@ -107,10 +122,17 @@ Stop moving the motor and hold position
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Emits**: <code>[hold](#Stepper+event_hold)</code>  
+**Example** *(Log to console when the motor holds position)*  
+```js
+motor.on('hold', () => console.log('Holding position'));
+motor.hold();
+// => undefined
+// => "Holding position"
+```
 <a name="Stepper+move"></a>
 
 ### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
-Move the motor a specified number of steps
+Move the motor a specified number of steps. Each step fires a 'move' event.
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
@@ -120,6 +142,31 @@ Move the motor a specified number of steps
 | --- | --- | --- |
 | stepsToMove | <code>number</code> | Positive for forward, negative for backward |
 
+**Example** *(Move the motor forward one full rotation, then log to console)*  
+```js
+motor.move(200).then(() => console.log('Motion complete'));
+// => Promise
+// => "Motion complete"
+```
+**Example** *(Same thing, using an event handler instead of a promise)*  
+```js
+motor.on('complete', () => console.log('Motion complete'));
+motor.move(200);
+// => Promise
+```
+**Example** *(Log each step moved, in excruciating detail)*  
+```js
+motor.on('move', (direction, phase, pinStates) => {
+  console.debug(
+    'Moved one step (direction: %d, phase: %O, pinStates: %O)',
+    direction,
+    phase,
+    pinStates
+  );
+});
+motor.move(200);
+// => Promise
+```
 <a name="Stepper+event_speed"></a>
 
 ### "speed" (rpms, stepDelay)
@@ -178,13 +225,7 @@ Create a stepper motor controller
 **Example**  
 ```js
 import { Stepper } from 'wpi-stepper';
-  const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
-  motor.speed = 20;
-  motor.move(200).then(() => console.log('We have revolved!'));
-  motor.move(-200).then(() => console.log('Right back where we started'));
-  motor.on('stop', () => console.log('Powering down.'));
-  motor.stop();
-  // => "Powering down."
+const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
 ```
 <a name="Stepper+maxRPM"></a>
 
@@ -205,6 +246,11 @@ Set motor speed in RPM
 | --- | --- | --- |
 | rpm | <code>number</code> | The number of RPMs |
 
+**Example** *(Sets the speed to 20 RPM)*  
+```js
+motor.speed = 20;
+// => 20
+```
 <a name="Stepper+stop"></a>
 
 ### stepper.stop() ⇒ <code>undefined</code>
@@ -212,6 +258,13 @@ Stop the motor and power down all GPIO pins
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Emits**: <code>[stop](#Stepper+event_stop)</code>  
+**Example** *(Log to console whenever the motor stops)*  
+```js
+motor.on('stop', () => console.log('Motor stopped'));
+motor.stop();
+// => undefined
+// => "Motor stopped"
+```
 <a name="Stepper+hold"></a>
 
 ### stepper.hold() ⇒ <code>undefined</code>
@@ -219,10 +272,17 @@ Stop moving the motor and hold position
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Emits**: <code>[hold](#Stepper+event_hold)</code>  
+**Example** *(Log to console when the motor holds position)*  
+```js
+motor.on('hold', () => console.log('Holding position'));
+motor.hold();
+// => undefined
+// => "Holding position"
+```
 <a name="Stepper+move"></a>
 
 ### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
-Move the motor a specified number of steps
+Move the motor a specified number of steps. Each step fires a 'move' event.
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
@@ -232,6 +292,31 @@ Move the motor a specified number of steps
 | --- | --- | --- |
 | stepsToMove | <code>number</code> | Positive for forward, negative for backward |
 
+**Example** *(Move the motor forward one full rotation, then log to console)*  
+```js
+motor.move(200).then(() => console.log('Motion complete'));
+// => Promise
+// => "Motion complete"
+```
+**Example** *(Same thing, using an event handler instead of a promise)*  
+```js
+motor.on('complete', () => console.log('Motion complete'));
+motor.move(200);
+// => Promise
+```
+**Example** *(Log each step moved, in excruciating detail)*  
+```js
+motor.on('move', (direction, phase, pinStates) => {
+  console.debug(
+    'Moved one step (direction: %d, phase: %O, pinStates: %O)',
+    direction,
+    phase,
+    pinStates
+  );
+});
+motor.move(200);
+// => Promise
+```
 <a name="Stepper+event_speed"></a>
 
 ### "speed" (rpms, stepDelay)
@@ -280,3 +365,10 @@ A matrix of high/low pin values, representing each step of an activation cycle
 A number of steps to advance or retreat
 
 **Kind**: global typedef  
+<a name="external_EventEmitter"></a>
+
+## EventEmitter
+Node's EventEmitter module
+
+**Kind**: global external  
+**See**: [https://nodejs.org/api/events.html](https://nodejs.org/api/events.html)  

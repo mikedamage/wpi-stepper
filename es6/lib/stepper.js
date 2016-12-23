@@ -4,6 +4,12 @@ import EventEmitter    from 'events';
 import NanoTimer       from 'nanotimer';
 
 /**
+ * Node's EventEmitter module
+ * @external EventEmitter
+ * @see {@link https://nodejs.org/api/events.html}
+ */
+
+/**
  * A matrix of high/low pin values, representing each step of an activation cycle
  * @typedef {Array} Mode
  */
@@ -49,6 +55,7 @@ export const BACKWARD = -1;
 
 /**
  * Stepper motor control class
+ * @extends EventEmitter
  */
 export class Stepper extends EventEmitter {
   /**
@@ -59,14 +66,8 @@ export class Stepper extends EventEmitter {
    * @param {Mode} config.mode - GPIO pin activation sequence
    * @param {number} config.speed - Motor rotation speed in RPM
    * @example
-   *   import { Stepper } from 'wpi-stepper';
-   *   const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
-   *   motor.speed = 20;
-   *   motor.move(200).then(() => console.log('We have revolved!'));
-   *   motor.move(-200).then(() => console.log('Right back where we started'));
-   *   motor.on('stop', () => console.log('Powering down.'));
-   *   motor.stop();
-   *   // => "Powering down."
+   * import { Stepper } from 'wpi-stepper';
+   * const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
    * @returns {Object} an instance of Stepper
    */
   constructor({ pins, steps = 200, mode = MODES.DUAL, speed = 1 }) {
@@ -103,6 +104,9 @@ export class Stepper extends EventEmitter {
    * @type {number}
    * @param {number} rpm - The number of RPMs
    * @fires Stepper#speed
+   * @example <caption>Sets the speed to 20 RPM</caption>
+   * motor.speed = 20;
+   * // => 20
    */
   set speed(rpm) {
     this._rpms = rpm;
@@ -129,6 +133,11 @@ export class Stepper extends EventEmitter {
   /**
    * Stop the motor and power down all GPIO pins
    * @fires Stepper#stop
+   * @example <caption>Log to console whenever the motor stops</caption>
+   * motor.on('stop', () => console.log('Motor stopped'));
+   * motor.stop();
+   * // => undefined
+   * // => "Motor stopped"
    * @returns {undefined}
    */
   stop() {
@@ -145,6 +154,11 @@ export class Stepper extends EventEmitter {
   /**
    * Stop moving the motor and hold position
    * @fires Stepper#hold
+   * @example <caption>Log to console when the motor holds position</caption>
+   * motor.on('hold', () => console.log('Holding position'));
+   * motor.hold();
+   * // => undefined
+   * // => "Holding position"
    * @returns {undefined}
    */
   hold() {
@@ -158,12 +172,20 @@ export class Stepper extends EventEmitter {
   }
 
   /**
-   * Move the motor a specified number of steps
+   * Move the motor a specified number of steps. Each step fires a 'move' event.
    * @param {number} stepsToMove - Positive for forward, negative for backward
    * @fires Stepper#start
    * @fires Stepper#move
    * @fires Stepper#complete
    * @fires Stepper#hold
+   * @example <caption>Move the motor forward one full rotation, then log to console</caption>
+   * motor.move(200).then(() => console.log('Motion complete'));
+   * // => Promise
+   * // => "Motion complete"
+   * @example <caption>Same thing, using an event handler instead of a promise</caption>
+   * motor.on('complete', () => console.log('Motion complete'));
+   * motor.move(200);
+   * // => Promise
    * @returns {Promise.<number>} A promise resolving to the number of steps moved
    */
   move(stepsToMove) {
@@ -233,6 +255,26 @@ export class Stepper extends EventEmitter {
     const pinStates = this.mode[phase];
 
     this._setPinStates(...pinStates);
+
+    /**
+     * Fires each time the motor moves a step
+     * @event Stepper#move
+     * @param {number} direction - 1 for forward, -1 for backward
+     * @param {number} phase - Current pin activation phase
+     * @param {number[]} pinStates - Current pin activation states
+     *
+     * @example <caption>Log each step moved, in excruciating detail</caption>
+     * motor.on('move', (direction, phase, pinStates) => {
+     *   console.debug(
+     *     'Moved one step (direction: %d, phase: %O, pinStates: %O)',
+     *     direction,
+     *     phase,
+     *     pinStates
+     *   );
+     * });
+     * motor.move(200);
+     * // => Promise
+     */
     this.emit('move', direction, phase, pinStates);
   }
 
