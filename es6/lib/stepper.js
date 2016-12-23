@@ -10,8 +10,20 @@ import NanoTimer       from 'nanotimer';
  */
 
 /**
- * A matrix of high/low pin values, representing each step of an activation cycle
- * @typedef {Array} Mode
+ * A Bunyan `Logger` instance
+ * @external Logger
+ * @see {@link https://www.npmjs.com/package/bunyan}
+ */
+
+/**
+ * Represents a single step of the motor, indicating which pins should be active.
+ * Must have the same number of members as `this.pins.length`.
+ * @typedef {number[]} Phase
+ */
+
+/**
+ * An array of Phases, each representing a single motor step
+ * @typedef {Phase[]} Mode
  */
 
 /**
@@ -35,8 +47,8 @@ export const MODES = {
 };
 
 /**
- * A number of steps to advance or retreat
- * @typedef {number} direction
+ * Positive number denotes forward motion, negative denotes backward motion.
+ * @typedef {number} Direction
  */
 
 /**
@@ -59,12 +71,12 @@ export const BACKWARD = -1;
  */
 export class Stepper extends EventEmitter {
   /**
-   * Create a stepper motor controller
+   * Create a stepper motor controller instance
    * @param {Object} config - An object of configuration parameters
-   * @param {number[]} config.pins - An array of Raspberry Pi GPIO pin numbers
-   * @param {number} config.steps - The number of steps per motor revolution
-   * @param {Mode} config.mode - GPIO pin activation sequence
-   * @param {number} config.speed - Motor rotation speed in RPM
+   * @param {number[]} config.pins - An array of Raspberry Pi GPIO pin numbers _(NOT WiringPi pin numbers)_
+   * @param {number} [config.steps=200] - The number of steps per motor revolution
+   * @param {Mode} [config.mode=MODES.DUAL] - GPIO pin activation sequence
+   * @param {number} [config.speed=1] - Motor rotation speed in RPM
    * @example
    * import { Stepper } from 'wpi-stepper';
    * const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
@@ -92,7 +104,8 @@ export class Stepper extends EventEmitter {
 
   /**
    * The maximum speed at which the motor can rotate (as dictated by our
-   * timing resolution). Currently we can send a signal once every microsecond.
+   * timing resolution). _Note: This is not your motor's top speed; it's the computer's.
+   * This library has not been tested with actual motor speeds in excess of 300 RPM.
    * @type {number}
    */
   get maxRPM() {
@@ -107,6 +120,11 @@ export class Stepper extends EventEmitter {
    * @example <caption>Sets the speed to 20 RPM</caption>
    * motor.speed = 20;
    * // => 20
+   * @example <caption>Receive notifications when motor speed changes</caption>
+   * motor.on('speed', (rpms, stepDelay) => console.log('RPM: %d, Step Delay: %d', rpms, stepDelay));
+   * motor.speed = 20;
+   * // => 20
+   * // => "RPM: 20, Step Delay: 15000"
    */
   set speed(rpm) {
     this._rpms = rpm;
@@ -121,7 +139,7 @@ export class Stepper extends EventEmitter {
      * Speed change event
      * @event Stepper#speed
      * @param {number} rpms - The current RPM number
-     * @param {number} stepDelay - The current step delay in msj
+     * @param {number} stepDelay - The current step delay in microseconds
      */
     this.emit('speed', this._rpms, this._stepDelay);
   }
@@ -172,7 +190,9 @@ export class Stepper extends EventEmitter {
   }
 
   /**
-   * Move the motor a specified number of steps. Each step fires a 'move' event.
+   * Move the motor a specified number of steps. Each step fires a `move` event. If another call to `move()`
+   * is made while a motion is still executing, the previous motion will be cancelled and a `cancel` event
+   * will fire.
    * @param {number} stepsToMove - Positive for forward, negative for backward
    * @fires Stepper#start
    * @fires Stepper#move
@@ -186,6 +206,7 @@ export class Stepper extends EventEmitter {
    * motor.on('complete', () => console.log('Motion complete'));
    * motor.move(200);
    * // => Promise
+   * // => "Motion complete"
    * @returns {Promise.<number>} A promise resolving to the number of steps moved
    */
   move(stepsToMove) {
@@ -194,6 +215,10 @@ export class Stepper extends EventEmitter {
     }
 
     if (this.moving) {
+      /**
+       * Emitted when a motion is cancelled, before a new one begins
+       * @event Stepper#cancel
+       */
       this.emit('cancel');
       this.hold();
     }
@@ -202,46 +227,57 @@ export class Stepper extends EventEmitter {
     let remaining  = Math.abs(stepsToMove);
     this.direction = stepsToMove > 0 ? FORWARD : BACKWARD;
 
+    /**
+     * Fires right before a new motion begins
+     * @event Stepper#start
+     * @param {Direction} direction
+     * @param {number} stepsToMove - The requested number of steps to move
+     */
     this.emit('start', this.direction, stepsToMove);
 
     return new Promise((resolve) => {
       this._moveTimer.setInterval(() => {
         if (remaining === 0) {
+          /**
+           * Fires when a motion is completed and there are no more steps to move, right before the motor holds position
+           * @event Stepper#complete
+           */
           this.emit('complete');
           this.hold();
           return resolve(this.stepNum);
         }
 
-        this._step(this.direction);
+        this.step(this.direction);
         remaining--;
       }, '', `${this._stepDelay}u`);
     });
   }
 
+  /**
+   * Moves the motor a single step forward. Convenience method for `this.step(FORWARD)`.
+   * @fires Stepper#move
+   * @returns {number} The motor's current step number
+   */
   stepForward() {
-    this._step(FORWARD);
+    return this.step(FORWARD);
   }
 
+  /**
+   * Moves the motor a single step backward. Convenience method for `this.step(BACKWARD)`.
+   * @fires Stepper#move
+   * @returns {number} The motor's current step number
+   */
   stepBackward() {
-    this._step(BACKWARD);
+    return this.step(BACKWARD);
   }
 
-  attachLogger(logger) {
-    const childLog = logger.child({ module: 'Stepper' });
-
-    this.on('power', () => childLog.info({ powered: this._powered }, 'power toggled'));
-    this.on('speed', () => childLog.info({ rpms: this._rpms, stepDelay: this._stepDelay }, 'speed changed'));
-    this.on('hold', () => childLog.info('holding position'));
-    this.on('start', (direction, steps) => childLog.info({ direction, steps }, 'starting motion'));
-    this.on('stop', () => childLog.info('stopping'));
-    this.on('cancel', () => childLog.info('cancelling previous motion'));
-    this.on('move', (direction, phase, pinStates) => {
-      childLog.debug({ direction, phase, pinStates }, 'move one step');
-    });
-    this.on('complete', () => childLog.info({ numSteps: this._numSteps }, 'motion complete'));
-  }
-
-  _step(direction) {
+  /**
+   * Move the motor one step in the given direction
+   * @fires Stepper#move
+   * @param {Direction} direction - The direction in which to move
+   * @returns {number} The motor's current step number
+   */
+  step(direction) {
     let phase;
 
     if (direction === FORWARD) {
@@ -276,8 +312,35 @@ export class Stepper extends EventEmitter {
      * // => Promise
      */
     this.emit('move', direction, phase, pinStates);
+
+    return this.stepNum;
   }
 
+  /**
+   * Attach a `bunyan` logger instance to report on all possible events at varying detail levels.
+   * @param {Logger} logger - a Bunyan logger instance
+   * @returns {undefined}
+   */
+  attachLogger(logger) {
+    const childLog = logger.child({ module: 'Stepper' });
+
+    this.on('power', () => childLog.info({ powered: this._powered }, 'power toggled'));
+    this.on('speed', () => childLog.info({ rpms: this._rpms, stepDelay: this._stepDelay }, 'speed changed'));
+    this.on('hold', () => childLog.info('holding position'));
+    this.on('start', (direction, steps) => childLog.info({ direction, steps }, 'starting motion'));
+    this.on('stop', () => childLog.info('stopping'));
+    this.on('cancel', () => childLog.info('cancelling previous motion'));
+    this.on('move', (direction, phase, pinStates) => {
+      childLog.debug({ direction, phase, pinStates }, 'move one step');
+    });
+    this.on('complete', () => childLog.info({ numSteps: this._numSteps }, 'motion complete'));
+  }
+
+  /**
+   * Stop all queued motion
+   * @private
+   * @returns {undefined}
+   */
   _stopMoving() {
     this._resetMoveTimer();
     this.moving = false;

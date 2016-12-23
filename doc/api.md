@@ -13,20 +13,24 @@
 <dl>
 <dt><a href="#MODES">MODES</a> : <code>Object.&lt;string, Mode&gt;</code></dt>
 <dd></dd>
-<dt><a href="#FORWARD">FORWARD</a> : <code>Direction</code></dt>
+<dt><a href="#FORWARD">FORWARD</a> : <code><a href="#Direction">Direction</a></code></dt>
 <dd></dd>
-<dt><a href="#BACKWARD">BACKWARD</a> : <code>Direction</code></dt>
+<dt><a href="#BACKWARD">BACKWARD</a> : <code><a href="#Direction">Direction</a></code></dt>
 <dd></dd>
 </dl>
 
 ## Typedefs
 
 <dl>
-<dt><a href="#Mode">Mode</a> : <code>Array</code></dt>
-<dd><p>A matrix of high/low pin values, representing each step of an activation cycle</p>
+<dt><a href="#Phase">Phase</a> : <code>Array.&lt;number&gt;</code></dt>
+<dd><p>Represents a single step of the motor, indicating which pins should be active.
+Must have the same number of members as <code>this.pins.length</code>.</p>
 </dd>
-<dt><a href="#direction">direction</a> : <code>number</code></dt>
-<dd><p>A number of steps to advance or retreat</p>
+<dt><a href="#Mode">Mode</a> : <code><a href="#Phase">Array.&lt;Phase&gt;</a></code></dt>
+<dd><p>An array of Phases, each representing a single motor step</p>
+</dd>
+<dt><a href="#Direction">Direction</a> : <code>number</code></dt>
+<dd><p>Positive number denotes forward motion, negative denotes backward motion.</p>
 </dd>
 </dl>
 
@@ -35,6 +39,9 @@
 <dl>
 <dt><a href="#external_EventEmitter">EventEmitter</a></dt>
 <dd><p>Node&#39;s EventEmitter module</p>
+</dd>
+<dt><a href="#external_Logger">Logger</a></dt>
+<dd><p>A Bunyan <code>Logger</code> instance</p>
 </dd>
 </dl>
 
@@ -53,24 +60,32 @@ Stepper motor control class
     * [.stop()](#Stepper+stop) ⇒ <code>undefined</code>
     * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
     * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
+    * [.stepForward()](#Stepper+stepForward) ⇒ <code>number</code>
+    * [.stepBackward()](#Stepper+stepBackward) ⇒ <code>number</code>
+    * [.step(direction)](#Stepper+step) ⇒ <code>number</code>
+    * [.attachLogger(logger)](#Stepper+attachLogger) ⇒ <code>undefined</code>
     * ["speed" (rpms, stepDelay)](#Stepper+event_speed)
     * ["stop"](#Stepper+event_stop)
     * ["hold"](#Stepper+event_hold)
+    * ["cancel"](#Stepper+event_cancel)
+    * ["start" (direction, stepsToMove)](#Stepper+event_start)
+    * ["complete"](#Stepper+event_complete)
+    * ["move" (direction, phase, pinStates)](#Stepper+event_move)
 
 <a name="new_Stepper_new"></a>
 
 ### new Stepper(config)
-Create a stepper motor controller
+Create a stepper motor controller instance
 
 **Returns**: <code>Object</code> - an instance of Stepper  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| config | <code>Object</code> | An object of configuration parameters |
-| config.pins | <code>Array.&lt;number&gt;</code> | An array of Raspberry Pi GPIO pin numbers |
-| config.steps | <code>number</code> | The number of steps per motor revolution |
-| config.mode | <code>[Mode](#Mode)</code> | GPIO pin activation sequence |
-| config.speed | <code>number</code> | Motor rotation speed in RPM |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| config | <code>Object</code> |  | An object of configuration parameters |
+| config.pins | <code>Array.&lt;number&gt;</code> |  | An array of Raspberry Pi GPIO pin numbers _(NOT WiringPi pin numbers)_ |
+| [config.steps] | <code>number</code> | <code>200</code> | The number of steps per motor revolution |
+| [config.mode] | <code>[Mode](#Mode)</code> | <code>MODES.DUAL</code> | GPIO pin activation sequence |
+| [config.speed] | <code>number</code> | <code>1</code> | Motor rotation speed in RPM |
 
 **Example**  
 ```js
@@ -81,7 +96,8 @@ const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
 
 ### stepper.maxRPM : <code>number</code>
 The maximum speed at which the motor can rotate (as dictated by our
-timing resolution). Currently we can send a signal once every microsecond.
+timing resolution). _Note: This is not your motor's top speed; it's the computer's.
+This library has not been tested with actual motor speeds in excess of 300 RPM.
 
 **Kind**: instance property of <code>[Stepper](#Stepper)</code>  
 <a name="Stepper+speed"></a>
@@ -100,6 +116,13 @@ Set motor speed in RPM
 ```js
 motor.speed = 20;
 // => 20
+```
+**Example** *(Receive notifications when motor speed changes)*  
+```js
+motor.on('speed', (rpms, stepDelay) => console.log('RPM: %d, Step Delay: %d', rpms, stepDelay));
+motor.speed = 20;
+// => 20
+// => "RPM: 20, Step Delay: 15000"
 ```
 <a name="Stepper+stop"></a>
 
@@ -132,11 +155,13 @@ motor.hold();
 <a name="Stepper+move"></a>
 
 ### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
-Move the motor a specified number of steps. Each step fires a 'move' event.
+Move the motor a specified number of steps. Each step fires a `move` event. If another call to `move()`
+is made while a motion is still executing, the previous motion will be cancelled and a `cancel` event
+will fire.
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
-**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>[hold](#Stepper+event_hold)</code>  
+**Emits**: <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -153,20 +178,48 @@ motor.move(200).then(() => console.log('Motion complete'));
 motor.on('complete', () => console.log('Motion complete'));
 motor.move(200);
 // => Promise
+// => "Motion complete"
 ```
-**Example** *(Log each step moved, in excruciating detail)*  
-```js
-motor.on('move', (direction, phase, pinStates) => {
-  console.debug(
-    'Moved one step (direction: %d, phase: %O, pinStates: %O)',
-    direction,
-    phase,
-    pinStates
-  );
-});
-motor.move(200);
-// => Promise
-```
+<a name="Stepper+stepForward"></a>
+
+### stepper.stepForward() ⇒ <code>number</code>
+Moves the motor a single step forward. Convenience method for `this.step(FORWARD)`.
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>number</code> - The motor's current step number  
+**Emits**: <code>[move](#Stepper+event_move)</code>  
+<a name="Stepper+stepBackward"></a>
+
+### stepper.stepBackward() ⇒ <code>number</code>
+Moves the motor a single step backward. Convenience method for `this.step(BACKWARD)`.
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>number</code> - The motor's current step number  
+**Emits**: <code>[move](#Stepper+event_move)</code>  
+<a name="Stepper+step"></a>
+
+### stepper.step(direction) ⇒ <code>number</code>
+Move the motor one step in the given direction
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>number</code> - The motor's current step number  
+**Emits**: <code>[move](#Stepper+event_move)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| direction | <code>[Direction](#Direction)</code> | The direction in which to move |
+
+<a name="Stepper+attachLogger"></a>
+
+### stepper.attachLogger(logger) ⇒ <code>undefined</code>
+Attach a `bunyan` logger instance to report on all possible events at varying detail levels.
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| logger | <code>Logger</code> | a Bunyan logger instance |
+
 <a name="Stepper+event_speed"></a>
 
 ### "speed" (rpms, stepDelay)
@@ -177,7 +230,7 @@ Speed change event
 | Param | Type | Description |
 | --- | --- | --- |
 | rpms | <code>number</code> | The current RPM number |
-| stepDelay | <code>number</code> | The current step delay in msj |
+| stepDelay | <code>number</code> | The current step delay in microseconds |
 
 <a name="Stepper+event_stop"></a>
 
@@ -191,6 +244,56 @@ Fires when the motor stops moving AND powers off all magnets
 Fires when the motor stops moving and holds its current position
 
 **Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_cancel"></a>
+
+### "cancel"
+Emitted when a motion is cancelled, before a new one begins
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_start"></a>
+
+### "start" (direction, stepsToMove)
+Fires right before a new motion begins
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| direction | <code>[Direction](#Direction)</code> |  |
+| stepsToMove | <code>number</code> | The requested number of steps to move |
+
+<a name="Stepper+event_complete"></a>
+
+### "complete"
+Fires when a motion is completed and there are no more steps to move, right before the motor holds position
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_move"></a>
+
+### "move" (direction, phase, pinStates)
+Fires each time the motor moves a step
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| direction | <code>number</code> | 1 for forward, -1 for backward |
+| phase | <code>number</code> | Current pin activation phase |
+| pinStates | <code>Array.&lt;number&gt;</code> | Current pin activation states |
+
+**Example** *(Log each step moved, in excruciating detail)*  
+```js
+motor.on('move', (direction, phase, pinStates) => {
+  console.debug(
+    'Moved one step (direction: %d, phase: %O, pinStates: %O)',
+    direction,
+    phase,
+    pinStates
+  );
+});
+motor.move(200);
+// => Promise
+```
 <a name="Stepper"></a>
 
 ## Stepper
@@ -203,24 +306,32 @@ Fires when the motor stops moving and holds its current position
     * [.stop()](#Stepper+stop) ⇒ <code>undefined</code>
     * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
     * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
+    * [.stepForward()](#Stepper+stepForward) ⇒ <code>number</code>
+    * [.stepBackward()](#Stepper+stepBackward) ⇒ <code>number</code>
+    * [.step(direction)](#Stepper+step) ⇒ <code>number</code>
+    * [.attachLogger(logger)](#Stepper+attachLogger) ⇒ <code>undefined</code>
     * ["speed" (rpms, stepDelay)](#Stepper+event_speed)
     * ["stop"](#Stepper+event_stop)
     * ["hold"](#Stepper+event_hold)
+    * ["cancel"](#Stepper+event_cancel)
+    * ["start" (direction, stepsToMove)](#Stepper+event_start)
+    * ["complete"](#Stepper+event_complete)
+    * ["move" (direction, phase, pinStates)](#Stepper+event_move)
 
 <a name="new_Stepper_new"></a>
 
 ### new Stepper(config)
-Create a stepper motor controller
+Create a stepper motor controller instance
 
 **Returns**: <code>Object</code> - an instance of Stepper  
 
-| Param | Type | Description |
-| --- | --- | --- |
-| config | <code>Object</code> | An object of configuration parameters |
-| config.pins | <code>Array.&lt;number&gt;</code> | An array of Raspberry Pi GPIO pin numbers |
-| config.steps | <code>number</code> | The number of steps per motor revolution |
-| config.mode | <code>[Mode](#Mode)</code> | GPIO pin activation sequence |
-| config.speed | <code>number</code> | Motor rotation speed in RPM |
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| config | <code>Object</code> |  | An object of configuration parameters |
+| config.pins | <code>Array.&lt;number&gt;</code> |  | An array of Raspberry Pi GPIO pin numbers _(NOT WiringPi pin numbers)_ |
+| [config.steps] | <code>number</code> | <code>200</code> | The number of steps per motor revolution |
+| [config.mode] | <code>[Mode](#Mode)</code> | <code>MODES.DUAL</code> | GPIO pin activation sequence |
+| [config.speed] | <code>number</code> | <code>1</code> | Motor rotation speed in RPM |
 
 **Example**  
 ```js
@@ -231,7 +342,8 @@ const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
 
 ### stepper.maxRPM : <code>number</code>
 The maximum speed at which the motor can rotate (as dictated by our
-timing resolution). Currently we can send a signal once every microsecond.
+timing resolution). _Note: This is not your motor's top speed; it's the computer's.
+This library has not been tested with actual motor speeds in excess of 300 RPM.
 
 **Kind**: instance property of <code>[Stepper](#Stepper)</code>  
 <a name="Stepper+speed"></a>
@@ -250,6 +362,13 @@ Set motor speed in RPM
 ```js
 motor.speed = 20;
 // => 20
+```
+**Example** *(Receive notifications when motor speed changes)*  
+```js
+motor.on('speed', (rpms, stepDelay) => console.log('RPM: %d, Step Delay: %d', rpms, stepDelay));
+motor.speed = 20;
+// => 20
+// => "RPM: 20, Step Delay: 15000"
 ```
 <a name="Stepper+stop"></a>
 
@@ -282,11 +401,13 @@ motor.hold();
 <a name="Stepper+move"></a>
 
 ### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
-Move the motor a specified number of steps. Each step fires a 'move' event.
+Move the motor a specified number of steps. Each step fires a `move` event. If another call to `move()`
+is made while a motion is still executing, the previous motion will be cancelled and a `cancel` event
+will fire.
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
-**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>[hold](#Stepper+event_hold)</code>  
+**Emits**: <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -303,20 +424,48 @@ motor.move(200).then(() => console.log('Motion complete'));
 motor.on('complete', () => console.log('Motion complete'));
 motor.move(200);
 // => Promise
+// => "Motion complete"
 ```
-**Example** *(Log each step moved, in excruciating detail)*  
-```js
-motor.on('move', (direction, phase, pinStates) => {
-  console.debug(
-    'Moved one step (direction: %d, phase: %O, pinStates: %O)',
-    direction,
-    phase,
-    pinStates
-  );
-});
-motor.move(200);
-// => Promise
-```
+<a name="Stepper+stepForward"></a>
+
+### stepper.stepForward() ⇒ <code>number</code>
+Moves the motor a single step forward. Convenience method for `this.step(FORWARD)`.
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>number</code> - The motor's current step number  
+**Emits**: <code>[move](#Stepper+event_move)</code>  
+<a name="Stepper+stepBackward"></a>
+
+### stepper.stepBackward() ⇒ <code>number</code>
+Moves the motor a single step backward. Convenience method for `this.step(BACKWARD)`.
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>number</code> - The motor's current step number  
+**Emits**: <code>[move](#Stepper+event_move)</code>  
+<a name="Stepper+step"></a>
+
+### stepper.step(direction) ⇒ <code>number</code>
+Move the motor one step in the given direction
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>number</code> - The motor's current step number  
+**Emits**: <code>[move](#Stepper+event_move)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| direction | <code>[Direction](#Direction)</code> | The direction in which to move |
+
+<a name="Stepper+attachLogger"></a>
+
+### stepper.attachLogger(logger) ⇒ <code>undefined</code>
+Attach a `bunyan` logger instance to report on all possible events at varying detail levels.
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| logger | <code>Logger</code> | a Bunyan logger instance |
+
 <a name="Stepper+event_speed"></a>
 
 ### "speed" (rpms, stepDelay)
@@ -327,7 +476,7 @@ Speed change event
 | Param | Type | Description |
 | --- | --- | --- |
 | rpms | <code>number</code> | The current RPM number |
-| stepDelay | <code>number</code> | The current step delay in msj |
+| stepDelay | <code>number</code> | The current step delay in microseconds |
 
 <a name="Stepper+event_stop"></a>
 
@@ -341,28 +490,85 @@ Fires when the motor stops moving AND powers off all magnets
 Fires when the motor stops moving and holds its current position
 
 **Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_cancel"></a>
+
+### "cancel"
+Emitted when a motion is cancelled, before a new one begins
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_start"></a>
+
+### "start" (direction, stepsToMove)
+Fires right before a new motion begins
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| direction | <code>[Direction](#Direction)</code> |  |
+| stepsToMove | <code>number</code> | The requested number of steps to move |
+
+<a name="Stepper+event_complete"></a>
+
+### "complete"
+Fires when a motion is completed and there are no more steps to move, right before the motor holds position
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_move"></a>
+
+### "move" (direction, phase, pinStates)
+Fires each time the motor moves a step
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| direction | <code>number</code> | 1 for forward, -1 for backward |
+| phase | <code>number</code> | Current pin activation phase |
+| pinStates | <code>Array.&lt;number&gt;</code> | Current pin activation states |
+
+**Example** *(Log each step moved, in excruciating detail)*  
+```js
+motor.on('move', (direction, phase, pinStates) => {
+  console.debug(
+    'Moved one step (direction: %d, phase: %O, pinStates: %O)',
+    direction,
+    phase,
+    pinStates
+  );
+});
+motor.move(200);
+// => Promise
+```
 <a name="MODES"></a>
 
 ## MODES : <code>Object.&lt;string, Mode&gt;</code>
 **Kind**: global constant  
 <a name="FORWARD"></a>
 
-## FORWARD : <code>Direction</code>
+## FORWARD : <code>[Direction](#Direction)</code>
 **Kind**: global constant  
 <a name="BACKWARD"></a>
 
-## BACKWARD : <code>Direction</code>
+## BACKWARD : <code>[Direction](#Direction)</code>
 **Kind**: global constant  
-<a name="Mode"></a>
+<a name="Phase"></a>
 
-## Mode : <code>Array</code>
-A matrix of high/low pin values, representing each step of an activation cycle
+## Phase : <code>Array.&lt;number&gt;</code>
+Represents a single step of the motor, indicating which pins should be active.
+Must have the same number of members as `this.pins.length`.
 
 **Kind**: global typedef  
-<a name="direction"></a>
+<a name="Mode"></a>
 
-## direction : <code>number</code>
-A number of steps to advance or retreat
+## Mode : <code>[Array.&lt;Phase&gt;](#Phase)</code>
+An array of Phases, each representing a single motor step
+
+**Kind**: global typedef  
+<a name="Direction"></a>
+
+## Direction : <code>number</code>
+Positive number denotes forward motion, negative denotes backward motion.
 
 **Kind**: global typedef  
 <a name="external_EventEmitter"></a>
@@ -372,3 +578,10 @@ Node's EventEmitter module
 
 **Kind**: global external  
 **See**: [https://nodejs.org/api/events.html](https://nodejs.org/api/events.html)  
+<a name="external_Logger"></a>
+
+## Logger
+A Bunyan `Logger` instance
+
+**Kind**: global external  
+**See**: [https://www.npmjs.com/package/bunyan](https://www.npmjs.com/package/bunyan)  
