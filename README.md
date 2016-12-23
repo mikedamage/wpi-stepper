@@ -18,6 +18,8 @@ I wrote `wpi-stepper` for a few reasons:
 
 I tried to make this library as configurable as possible, and it supports both events and ES6 promises wherever it makes sense to, so it should play well with other libraries you're using.
 
+_Note: This library uses WiringPi to toggle GPIO pins, which means that it must be run as root in order to work. If you're not running as root, your script will bail when WiringPi tries and fails to initialize._
+
 ## Installation
 
 ```sh
