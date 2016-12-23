@@ -1,6 +1,7 @@
 import _               from 'lodash';
 import wpi, { OUTPUT } from 'wiring-pi';
 import EventEmitter    from 'events';
+import NanoTimer       from 'nanotimer';
 
 /**
  * A matrix of high/low pin values, representing each step of an activation cycle
@@ -67,7 +68,7 @@ export class Stepper extends EventEmitter {
     this.moving     = false;
     this.direction  = null;
     this.speed      = speed;
-    this._moveTimer = null;
+    this._moveTimer = new NanoTimer();
     this._powered   = false;
 
     this._validateOptions();
@@ -83,7 +84,7 @@ export class Stepper extends EventEmitter {
    * @type {number}
    */
   get maxRPM() {
-    return 60 * 1000 / this.steps;
+    return 60 * 1e6 / this.steps;
   }
 
   /**
@@ -161,7 +162,7 @@ export class Stepper extends EventEmitter {
     this.emit('start', this.direction, stepsToMove);
 
     return new Promise((resolve) => {
-      this._moveTimer = setInterval(() => {
+      this._moveTimer.setInterval(() => {
         if (remaining === 0) {
           this.emit('complete');
           this.hold();
@@ -170,7 +171,7 @@ export class Stepper extends EventEmitter {
 
         this._step(this.direction);
         remaining--;
-      }, this._stepDelay);
+      }, '', `${this._stepDelay}u`);
     });
   }
 
@@ -241,8 +242,7 @@ export class Stepper extends EventEmitter {
   }
 
   _resetMoveTimer() {
-    clearInterval(this._moveTimer);
-    this._moveTimer = null;
+    this._moveTimer.clearInterval();
   }
 
   _incrementStep() {
