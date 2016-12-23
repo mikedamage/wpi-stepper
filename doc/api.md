@@ -45,12 +45,15 @@ Stepper motor control class
     * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
     * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
     * ["speed" (rpms, stepDelay)](#Stepper+event_speed)
+    * ["stop"](#Stepper+event_stop)
+    * ["hold"](#Stepper+event_hold)
 
 <a name="new_Stepper_new"></a>
 
 ### new Stepper(config)
 Create a stepper motor controller
 
+**Returns**: <code>Object</code> - an instance of Stepper  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -60,10 +63,22 @@ Create a stepper motor controller
 | config.mode | <code>[Mode](#Mode)</code> | GPIO pin activation sequence |
 | config.speed | <code>number</code> | Motor rotation speed in RPM |
 
+**Example**  
+```js
+import { Stepper } from 'wpi-stepper';
+  const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
+  motor.speed = 20;
+  motor.move(200).then(() => console.log('We have revolved!'));
+  motor.move(-200).then(() => console.log('Right back where we started'));
+  motor.on('stop', () => console.log('Powering down.'));
+  motor.stop();
+  // => "Powering down."
+```
 <a name="Stepper+maxRPM"></a>
 
 ### stepper.maxRPM : <code>number</code>
-The maximum speed at which the motor can rotate (as dictated by JS's timing resolution)
+The maximum speed at which the motor can rotate (as dictated by our
+timing resolution). Currently we can send a signal once every microsecond.
 
 **Kind**: instance property of <code>[Stepper](#Stepper)</code>  
 <a name="Stepper+speed"></a>
@@ -84,14 +99,14 @@ Set motor speed in RPM
 Stop the motor and power down all GPIO pins
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
-**Emits**: <code>Stepper#event:stop</code>  
+**Emits**: <code>[stop](#Stepper+event_stop)</code>  
 <a name="Stepper+hold"></a>
 
 ### stepper.hold() ⇒ <code>undefined</code>
 Stop moving the motor and hold position
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
-**Emits**: <code>Stepper#event:hold</code>  
+**Emits**: <code>[hold](#Stepper+event_hold)</code>  
 <a name="Stepper+move"></a>
 
 ### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
@@ -99,7 +114,7 @@ Move the motor a specified number of steps
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
-**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>Stepper#event:hold</code>  
+**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>[hold](#Stepper+event_hold)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -117,6 +132,18 @@ Speed change event
 | rpms | <code>number</code> | The current RPM number |
 | stepDelay | <code>number</code> | The current step delay in msj |
 
+<a name="Stepper+event_stop"></a>
+
+### "stop"
+Fires when the motor stops moving AND powers off all magnets
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_hold"></a>
+
+### "hold"
+Fires when the motor stops moving and holds its current position
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
 <a name="Stepper"></a>
 
 ## Stepper
@@ -130,12 +157,15 @@ Speed change event
     * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
     * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
     * ["speed" (rpms, stepDelay)](#Stepper+event_speed)
+    * ["stop"](#Stepper+event_stop)
+    * ["hold"](#Stepper+event_hold)
 
 <a name="new_Stepper_new"></a>
 
 ### new Stepper(config)
 Create a stepper motor controller
 
+**Returns**: <code>Object</code> - an instance of Stepper  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -145,10 +175,22 @@ Create a stepper motor controller
 | config.mode | <code>[Mode](#Mode)</code> | GPIO pin activation sequence |
 | config.speed | <code>number</code> | Motor rotation speed in RPM |
 
+**Example**  
+```js
+import { Stepper } from 'wpi-stepper';
+  const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
+  motor.speed = 20;
+  motor.move(200).then(() => console.log('We have revolved!'));
+  motor.move(-200).then(() => console.log('Right back where we started'));
+  motor.on('stop', () => console.log('Powering down.'));
+  motor.stop();
+  // => "Powering down."
+```
 <a name="Stepper+maxRPM"></a>
 
 ### stepper.maxRPM : <code>number</code>
-The maximum speed at which the motor can rotate (as dictated by JS's timing resolution)
+The maximum speed at which the motor can rotate (as dictated by our
+timing resolution). Currently we can send a signal once every microsecond.
 
 **Kind**: instance property of <code>[Stepper](#Stepper)</code>  
 <a name="Stepper+speed"></a>
@@ -169,14 +211,14 @@ Set motor speed in RPM
 Stop the motor and power down all GPIO pins
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
-**Emits**: <code>Stepper#event:stop</code>  
+**Emits**: <code>[stop](#Stepper+event_stop)</code>  
 <a name="Stepper+hold"></a>
 
 ### stepper.hold() ⇒ <code>undefined</code>
 Stop moving the motor and hold position
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
-**Emits**: <code>Stepper#event:hold</code>  
+**Emits**: <code>[hold](#Stepper+event_hold)</code>  
 <a name="Stepper+move"></a>
 
 ### stepper.move(stepsToMove) ⇒ <code>Promise.&lt;number&gt;</code>
@@ -184,7 +226,7 @@ Move the motor a specified number of steps
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
-**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>Stepper#event:hold</code>  
+**Emits**: <code>Stepper#event:start</code>, <code>Stepper#event:move</code>, <code>Stepper#event:complete</code>, <code>[hold](#Stepper+event_hold)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -202,6 +244,18 @@ Speed change event
 | rpms | <code>number</code> | The current RPM number |
 | stepDelay | <code>number</code> | The current step delay in msj |
 
+<a name="Stepper+event_stop"></a>
+
+### "stop"
+Fires when the motor stops moving AND powers off all magnets
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
+<a name="Stepper+event_hold"></a>
+
+### "hold"
+Fires when the motor stops moving and holds its current position
+
+**Kind**: event emitted by <code>[Stepper](#Stepper)</code>  
 <a name="MODES"></a>
 
 ## MODES : <code>Object.&lt;string, Mode&gt;</code>
