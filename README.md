@@ -18,6 +18,12 @@ I wrote `wpi-stepper` for a few reasons:
 
 I tried to make this library as configurable as possible, and it supports both events and ES6 promises wherever it makes sense to, so it should play well with other libraries you're using.
 
+## Installation
+
+```sh
+npm install --save wpi-stepper
+```
+
 ## Usage
 
 ### ES5 Module
