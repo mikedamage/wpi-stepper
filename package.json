@@ -1,6 +1,6 @@
 {
   "name": "wpi-stepper",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Stepper motor module for WiringPi-Node",
   "author": "Mike Green <mike.is.green@gmail.com>",
   "main": "dist/lib/stepper.js",
