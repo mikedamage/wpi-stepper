@@ -58,6 +58,16 @@ export class Stepper extends EventEmitter {
    * @param {number} config.steps - The number of steps per motor revolution
    * @param {Mode} config.mode - GPIO pin activation sequence
    * @param {number} config.speed - Motor rotation speed in RPM
+   * @example
+   *   import { Stepper } from 'wpi-stepper';
+   *   const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
+   *   motor.speed = 20;
+   *   motor.move(200).then(() => console.log('We have revolved!'));
+   *   motor.move(-200).then(() => console.log('Right back where we started'));
+   *   motor.on('stop', () => console.log('Powering down.'));
+   *   motor.stop();
+   *   // => "Powering down."
+   * @returns {Object} an instance of Stepper
    */
   constructor({ pins, steps = 200, mode = MODES.DUAL, speed = 1 }) {
     super();
@@ -80,7 +90,8 @@ export class Stepper extends EventEmitter {
   }
 
   /**
-   * The maximum speed at which the motor can rotate (as dictated by JS's timing resolution)
+   * The maximum speed at which the motor can rotate (as dictated by our
+   * timing resolution). Currently we can send a signal once every microsecond.
    * @type {number}
    */
   get maxRPM() {
@@ -123,6 +134,11 @@ export class Stepper extends EventEmitter {
   stop() {
     this._stopMoving();
     this._powerDown();
+
+    /**
+     * Fires when the motor stops moving AND powers off all magnets
+     * @event Stepper#stop
+     */
     this.emit('stop');
   }
 
@@ -133,6 +149,11 @@ export class Stepper extends EventEmitter {
    */
   hold() {
     this._stopMoving();
+
+    /**
+     * Fires when the motor stops moving and holds its current position
+     * @event Stepper#hold
+     */
     this.emit('hold');
   }
 
