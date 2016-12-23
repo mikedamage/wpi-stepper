@@ -6,6 +6,7 @@
   "main": "dist/lib/stepper.js",
   "dependencies": {
     "lodash": "^4.17.2",
+    "nanotimer": "^0.3.14",
     "wiring-pi": "^2.2.1"
   },
   "devDependencies": {
