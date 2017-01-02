@@ -60,6 +60,7 @@ Stepper motor control class
     * [.stop()](#Stepper+stop) ⇒ <code>undefined</code>
     * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
     * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
+    * [.run([direction])](#Stepper+run) ⇒ <code>undefined</code>
     * [.stepForward()](#Stepper+stepForward) ⇒ <code>number</code>
     * [.stepBackward()](#Stepper+stepBackward) ⇒ <code>number</code>
     * [.step(direction)](#Stepper+step) ⇒ <code>number</code>
@@ -161,7 +162,7 @@ will fire.
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
-**Emits**: <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>  
+**Emits**: <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>, <code>[cancel](#Stepper+event_cancel)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -180,6 +181,19 @@ motor.move(200);
 // => Promise
 // => "Motion complete"
 ```
+<a name="Stepper+run"></a>
+
+### stepper.run([direction]) ⇒ <code>undefined</code>
+Run the motor in the given direction indefinitely
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>undefined</code> - nothing  
+**Emits**: <code>[cancel](#Stepper+event_cancel)</code>, <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [direction] | <code>[Direction](#Direction)</code> | <code>FORWARD</code> | The direction in which to move (`FORWARD` or `BACKWARD`) |
+
 <a name="Stepper+stepForward"></a>
 
 ### stepper.stepForward() ⇒ <code>number</code>
@@ -306,6 +320,7 @@ motor.move(200);
     * [.stop()](#Stepper+stop) ⇒ <code>undefined</code>
     * [.hold()](#Stepper+hold) ⇒ <code>undefined</code>
     * [.move(stepsToMove)](#Stepper+move) ⇒ <code>Promise.&lt;number&gt;</code>
+    * [.run([direction])](#Stepper+run) ⇒ <code>undefined</code>
     * [.stepForward()](#Stepper+stepForward) ⇒ <code>number</code>
     * [.stepBackward()](#Stepper+stepBackward) ⇒ <code>number</code>
     * [.step(direction)](#Stepper+step) ⇒ <code>number</code>
@@ -407,7 +422,7 @@ will fire.
 
 **Kind**: instance method of <code>[Stepper](#Stepper)</code>  
 **Returns**: <code>Promise.&lt;number&gt;</code> - A promise resolving to the number of steps moved  
-**Emits**: <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>  
+**Emits**: <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>, <code>[cancel](#Stepper+event_cancel)</code>  
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -426,6 +441,19 @@ motor.move(200);
 // => Promise
 // => "Motion complete"
 ```
+<a name="Stepper+run"></a>
+
+### stepper.run([direction]) ⇒ <code>undefined</code>
+Run the motor in the given direction indefinitely
+
+**Kind**: instance method of <code>[Stepper](#Stepper)</code>  
+**Returns**: <code>undefined</code> - nothing  
+**Emits**: <code>[cancel](#Stepper+event_cancel)</code>, <code>[start](#Stepper+event_start)</code>, <code>[move](#Stepper+event_move)</code>, <code>[complete](#Stepper+event_complete)</code>, <code>[hold](#Stepper+event_hold)</code>  
+
+| Param | Type | Default | Description |
+| --- | --- | --- | --- |
+| [direction] | <code>[Direction](#Direction)</code> | <code>FORWARD</code> | The direction in which to move (`FORWARD` or `BACKWARD`) |
+
 <a name="Stepper+stepForward"></a>
 
 ### stepper.stepForward() ⇒ <code>number</code>
