@@ -301,14 +301,11 @@ export class Stepper extends EventEmitter {
    * @returns {number} The motor's current step number
    */
   step(direction) {
-    let phase;
-
     if (!direction) {
       return;
     }
 
-    this._countStep(direction);
-
+    const phase     = this._countStep(direction);
     const pinStates = this.mode[phase];
 
     this._setPinStates(...pinStates);
