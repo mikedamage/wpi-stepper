@@ -362,8 +362,11 @@ export class Stepper extends EventEmitter {
   }
 
   _powerDown() {
+    let pins      = [ ...this.pins ];
     this._powered = false;
-    this._setPinStates(0, 0, 0, 0);
+
+    _.fill(pins, 0);
+    this._setPinStates(...pins);
     this.emit('power', false);
   }
 
