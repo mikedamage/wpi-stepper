@@ -88,7 +88,7 @@ Create a stepper motor controller instance
 | [config.mode] | <code>[Mode](#Mode)</code> | <code>MODES.DUAL</code> | GPIO pin activation sequence |
 | [config.speed] | <code>number</code> | <code>1</code> | Motor rotation speed in RPM |
 
-**Example**  
+**Example** *(Initialize a stepper controller on pins 17, 16, 13, and 12, for a motor with 200 steps per revolution)*  
 ```js
 import { Stepper } from 'wpi-stepper';
 const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
@@ -348,7 +348,7 @@ Create a stepper motor controller instance
 | [config.mode] | <code>[Mode](#Mode)</code> | <code>MODES.DUAL</code> | GPIO pin activation sequence |
 | [config.speed] | <code>number</code> | <code>1</code> | Motor rotation speed in RPM |
 
-**Example**  
+**Example** *(Initialize a stepper controller on pins 17, 16, 13, and 12, for a motor with 200 steps per revolution)*  
 ```js
 import { Stepper } from 'wpi-stepper';
 const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
