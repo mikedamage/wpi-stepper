@@ -113,6 +113,14 @@ export class Stepper extends EventEmitter {
   }
 
   /**
+   * Returns the absolute value of the current motor step
+   * @type {number}
+   */
+  get absoluteStep() {
+    return Math.abs(this.stepNum);
+  }
+
+  /**
    * Set motor speed in RPM
    * @type {number}
    * @param {number} rpm - The number of RPMs
@@ -295,13 +303,11 @@ export class Stepper extends EventEmitter {
   step(direction) {
     let phase;
 
-    if (direction === FORWARD) {
-      phase = this._incrementStep();
-    } else if (direction === BACKWARD) {
-      phase = this._decrementStep();
-    } else {
+    if (!direction) {
       return;
     }
+
+    this._countStep(direction);
 
     const pinStates = this.mode[phase];
 
@@ -389,24 +395,16 @@ export class Stepper extends EventEmitter {
     this._moveTimer.clearInterval();
   }
 
-  _incrementStep() {
-    this.stepNum++;
+  _countStep(direction) {
+    this.stepNum += direction;
 
     if (this.stepNum >= this.steps) {
       this.stepNum = 0;
-    }
-
-    return Math.abs(this.stepNum) % this.mode.length;
-  }
-
-  _decrementStep() {
-    this.stepNum--;
-
-    if (this.stepNum < 0) {
+    } else if (this.stepNum < 0) {
       this.stepNum = this.steps - 1;
     }
 
-    return Math.abs(this.stepNum) % this.mode.length;
+    return this.absoluteStep % this.mode.length;
   }
 
   _validateOptions() {
