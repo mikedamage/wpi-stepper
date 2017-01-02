@@ -77,7 +77,7 @@ export class Stepper extends EventEmitter {
    * @param {number} [config.steps=200] - The number of steps per motor revolution
    * @param {Mode} [config.mode=MODES.DUAL] - GPIO pin activation sequence
    * @param {number} [config.speed=1] - Motor rotation speed in RPM
-   * @example
+   * @example <caption>Initialize a stepper controller on pins 17, 16, 13, and 12, for a motor with 200 steps per revolution</caption>
    * import { Stepper } from 'wpi-stepper';
    * const motor = new Stepper({ pins: [ 17, 16, 13, 12 ], steps: 200 });
    * @returns {Object} an instance of Stepper
