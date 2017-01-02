@@ -198,6 +198,7 @@ export class Stepper extends EventEmitter {
    * @fires Stepper#move
    * @fires Stepper#complete
    * @fires Stepper#hold
+   * @fires Stepper#cancel
    * @example <caption>Move the motor forward one full rotation, then log to console</caption>
    * motor.move(200).then(() => console.log('Motion complete'));
    * // => Promise
@@ -251,6 +252,20 @@ export class Stepper extends EventEmitter {
         remaining--;
       }, '', `${this._stepDelay}u`);
     });
+  }
+
+  /**
+   * Run the motor in the given direction indefinitely
+   * @fires Stepper#cancel
+   * @fires Stepper#start
+   * @fires Stepper#move
+   * @fires Stepper#complete
+   * @fires Stepper#hold
+   * @param {Direction} [direction=FORWARD] - The direction in which to move (`FORWARD` or `BACKWARD`)
+   * @returns {undefined} nothing
+   */
+  run(direction = FORWARD) {
+    this.move(direction * Infinity);
   }
 
   /**
