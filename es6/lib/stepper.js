@@ -378,10 +378,10 @@ export class Stepper extends EventEmitter {
       throw new Error(`Must pass exactly ${this.pins.length} pin states`);
     }
 
-    for (let idx in states) {
-      wpi.digitalWrite(this.pins[idx], states[idx]);
+    for (let [idx, val] of states) {
+      wpi.digitalWrite(this.pins[idx], val);
 
-      if (!this._powered && states[idx] === 1) {
+      if (!this._powered && val === 1) {
         this._powered = true;
         this.emit('power', true);
       }
