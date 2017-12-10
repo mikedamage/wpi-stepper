@@ -1,5 +1,5 @@
 import _               from 'lodash';
-import wpi, { OUTPUT } from 'wiring-pi';
+import wpi, { OUTPUT } from 'wiringpi-node';
 import EventEmitter    from 'events';
 import NanoTimer       from 'nanotimer';
 

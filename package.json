@@ -7,7 +7,7 @@
   "dependencies": {
     "lodash": "^4.17.2",
     "nanotimer": "^0.3.14",
-    "wiring-pi": "^2.2.1"
+    "wiringpi-node": "^2.4.4"
   },
   "devDependencies": {
     "babel-cli": "^6.18.0",
